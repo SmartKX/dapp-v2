@@ -1,0 +1,29 @@
+{
+  "name": "app-loader",
+  "version": "1.1.0",
+  "description": "JavaScript Application Loader / Bundler",
+  "main": "lib/index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/skiv71/app-loader.git"
+  },
+  "keywords": [
+    "JavaScript",
+    "Rollup",
+    "Application",
+    "Loader",
+    "Bunlder"
+  ],
+  "author": "Neil Duffy",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/skiv71/app-loader/issues"
+  },
+  "homepage": "https://github.com/skiv71/app-loader#readme"
+}
