@@ -1,9 +1,9 @@
 app.module('view/main', function({ component, service }) {
 
 	var { contract, householdHeader, quarter, navigation } = component
-	var { blockchain } = service
+	var { blockchain, session } = service
 
-	var { session } = service
+	var { Vue } = window
 
 	var template = `
 		<div>
