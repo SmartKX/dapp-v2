@@ -1,29 +1,24 @@
 {
-  "name": "app-loader",
-  "version": "1.1.0",
-  "description": "JavaScript Application Loader / Bundler",
-  "main": "lib/index.js",
-  "directories": {
-    "lib": "lib"
+  "name": "dapp-v2",
+  "version": "1.0.0",
+  "description": "SmartKX app v2",
+  "main": "index.js",
+  "devDependencies": {
+    "@skivy71/app-loader": "^1.0.0",
+    "rollup-plugin-execute": "^1.0.0",
+    "rollup-plugin-node-resolve": "^4.0.0"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/skiv71/app-loader.git"
+    "url": "git+https://github.com/SmartKX/dapp-v2.git"
   },
-  "keywords": [
-    "JavaScript",
-    "Rollup",
-    "Application",
-    "Loader",
-    "Bunlder"
-  ],
   "author": "Neil Duffy",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/skiv71/app-loader/issues"
+    "url": "https://github.com/SmartKX/dapp-v2/issues"
   },
-  "homepage": "https://github.com/skiv71/app-loader#readme"
+  "homepage": "https://github.com/SmartKX/dapp-v2#readme"
 }

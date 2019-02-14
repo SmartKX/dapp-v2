@@ -1,4 +1,4 @@
-import { App } from '../../loader'
+import { App } from '@skivy71/app-loader'
 
 var app = new App()
 
