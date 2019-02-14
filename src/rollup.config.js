@@ -2,14 +2,12 @@ import resolve from 'rollup-plugin-node-resolve'
 import execute from 'rollup-plugin-execute'
 
 var dist = '../dist'
-
 var input = `js/main.js`
 
 var output = {
 	file: `${dist}/js/main.js`,
 	format: 'iife'
 }
-
 
 var options = {
 	execute: [
