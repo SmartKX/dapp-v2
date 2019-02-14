@@ -2,7 +2,7 @@
   "name": "dapp-v2",
   "version": "1.0.0",
   "description": "SmartKX app v2",
-  "main": "index.js",
+  "main": "",
   "devDependencies": {
     "@skivy71/app-loader": "^1.0.0",
     "rollup-plugin-execute": "^1.0.0",
