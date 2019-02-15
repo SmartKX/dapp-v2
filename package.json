@@ -11,7 +11,8 @@
   "scripts": {
     "preinstall": "npm i -g rollup",
     "clean": "rm -rf dist",
-    "build": "cd src && rollup -c"
+    "build": "cd src && rollup -c",
+    "deploy": "git subtree push --prefix dist origin gh-pages"
   },
   "repository": {
     "type": "git",
