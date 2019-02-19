@@ -1,8 +1,0 @@
-.collapse.show {
-    max-height: 500px;
-    transition: max-height 0.5s; 
-}
-.collapse {
-    max-height: 0;
-    transition: max-height 0.5s;
-}
