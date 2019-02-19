@@ -4,7 +4,7 @@ app.module('factory/Format', function() {
 
     class Format {
 
-        _numeral(a) {
+        static _numeral(a) {
             return numeral(a / 1e6)
         }
 
@@ -16,7 +16,7 @@ app.module('factory/Format', function() {
 
         static Y_Q(a) {
             var str = String(a)
-            return `${str.slice(1, 4)} ${str.slice(4)}`
+            return `${str.slice(0, 4)} Q${str.slice(4)}`
         }
 
         static YMD(a) {
@@ -24,9 +24,12 @@ app.module('factory/Format', function() {
             return moment(a, `YYYYMMDD`).format(fmt)
         }
 
-        static USD(a, short = false) {
-            var fmt = short ? `$0a` : `00`
-            return Format._numeral(a).format(fmt)
+        static _shortUSD(a) {
+            return Format._numeral(a).format(`$a0`)
+        } 
+
+        static USD(a) {
+            return typeof a == 'boolean' && a == true ? Format._shortUSD : Format._numeral(a).format(`00`)
         }
 
     }

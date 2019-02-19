@@ -70,158 +70,253 @@
 
 	var app = new App();
 
-	app.module('component/contract', function({ factory }) {
+	app.module('component/contract', function({ component }) {
 
-		var { Format } = factory;
+		var { quarters } = component;
 
 		var template = `
-		<div class="card">
-			<div class="card-header" id="headingOne">
-				<div data-toggle="collapse" :data-target="target" :aria-expanded="active ? 'true' : 'false'" aria-controls="collapseOne">
-					<h3 v-text="status"></h3>
-					<small class="text-muted" v-text="date"></small>
-				</div>
+		<div class="row">
+			<div class="col-4">
+				<p>
+					<small>
+						<span v-text="contract.Executed"></span>
+						<br/>
+						<span v-text="contract.Accounts"></span>
+						<br/>									
+						<a :href="contract.pdfLink">Contract PDF</a>
+						<br/>
+						<a :href="contract.auditLink">Contract Audit</a>
+					</small>	
+				</p>
+				<template v-for="year in contract.Years">
+					<quarters :contract="contract" :year="year"></quarters>
+				</template>
 			</div>
-			<div :id="id" class="collapse" :class="active ? 'show' : ''" aria-labelledby="headingOne" data-parent="#accordionExample">
-				<div class="card-body">
-					<div class="row">
-						<div class="col-4">
-							<p>
-								<small>
-									<span v-text="executed"></span>
-									<br/>
-									<span v-text="accounts"></span>
-									<br/>									
-									<a :href="pdfLink">Contract PDF</a>
-									<br/>
-									<a :href="auditLink">Contract Audit</a>
-								</small>	
-							</p>
-							<p class="h6">2019</p>
-							<div class="btn-group btn-group-sm btn-group-toggle mb-3" data-toggle="buttons">
-								<label class="btn btn-outline-dark">
-									<input type="radio" name="options" id="option1" autocomplete="off" checked> Q1
-								</label>
-								<label class="btn btn-outline-dark">
-									<input type="radio" name="options" id="option2" autocomplete="off" checked> Q2
-								</label>
-								<label class="btn btn-outline-dark">
-									<input type="radio" name="options" id="option3" autocomplete="off"> Q3
-								</label>
-								<label class="btn btn-outline-dark">
-									<input type="radio" name="options" id="option4" autocomplete="off"> Q4
-								</label>
-							</div>
-							<p class="h6">2018</p>
-							<div class="btn-group btn-group-sm btn-group-toggle mb-3" data-toggle="buttons">
-								<label class="btn btn-outline-dark disabled">
-									<input type="radio" name="options" id="option1" autocomplete="off" checked> Q1
-								</label>
-								<label class="btn btn-outline-dark">
-									<input type="radio" name="options" id="option2" autocomplete="off" checked> Q2
-								</label>
-								<label class="btn btn-outline-dark">
-									<input type="radio" name="options" id="option3" autocomplete="off"> Q3
-								</label>
-								<label class="btn btn-outline-dark">
-									<input type="radio" name="options" id="option4" autocomplete="off"> Q4
-								</label>
-							</div>
-						</div>
-						<div class="col">
-							<h5>Schedule</h5>
-							<table class="table table-sm">
-								<tr>
-									<th>Range</th>
-									<th>Rate</th>
-								</tr>
-								<tr id="rate0" v-for="(split, index) in splits">
-									<td>
-										<span v-text="range(split)"></span>
-									</td>
-									<td>
-										<span v-text="rate(split, index)"></span>
-									</td>
-								</tr>
-							</table>
-						</div>
-					</div>
-				</div>
+			<div class="col">
+				<h5>Schedule</h5>
+				<table class="table table-sm">
+					<tr>
+						<th>Range</th>
+						<th>Rate</th>
+					</tr>
+					<tr id="rate0" v-for="(split, index) in contract.splits">
+						<td>
+							<span v-text="contract.Range(index)"></span>
+						</td>
+						<td>
+							<span v-text="contract.Rate(index)"></span>
+						</td>
+					</tr>
+				</table>
 			</div>
 		</div>
 	`;
 
+		var components = { quarters };
+
 		return {
 			template,
+			components,
 			props: ['contract'],
 			data() {
 				return {
 				}
 			},
 			created() {
+				this.init();
 			},
 			mounted() {
 			},
 			destroyed() {
 			},
 			computed: {
-				accounts() {
-					var { length } = this.contract.accounts;
-					return `Accounts: ${length}`
-				},
-				active() {
-					var { active } = this.contract;
-					return active
-				},
-				address() {
-					var { address } = this.contract;
-					return address
-				},
-				auditLink() {
-					var { auditLink } = this.contract;
-					return auditLink
-				},
-				date() {
-					var { end, start } = this.contract;
-					return `${start} - ${end || 'Present' }`
-				},
-				executed() {
-					var { executed: e } = this.contract;
-					var executed = Format.YMD(e).toUpperCase();
-					return `Executed: ${executed}`
-				},
-				id() {
-					var { address } = this;
-					return `contract${address}`
-				},
-				pdfLink() {
-					var { pdfLink } = this.contract;
-					return pdfLink
-				},
-				splits() {
-					var { splits } = this.contract;
-					return splits
-				},
-				status() {
-					var { active } = this;
-					return active ? 'Active' : 'Archived'
-				},
-				target() {
-					var { id } = this;
-					return `#${id}`
+			},
+			methods: {
+				init() {
+					var { contract } = this;
+					if (contract.active) {
+	                    var [quarter] = contract.quarters
+							.sort((a, b) => b.id - a.id);
+						if (quarter)
+							contract.Quarter = quarter.id;
+	                }
+				}
+			},
+			watch: {
+			}
+		}
+
+	});
+
+	app.module('component/contracts', function({ component, model }) {
+
+	    var { contract } = component;
+	    var { Contract } = model;
+
+	    var template = `
+        <div class="accordion" id="accordionExample">
+            <div class="card" v-for="(contract, index) in contracts">
+			    <div class="card-header" id="headingOne" v-on:click="select(index)">
+				    <div data-toggle="collapse" :data-target="contract.Id(index, true)" :aria-expanded="contract.active" aria-controls="collapseOne">
+					    <h3 v-text="contract.Status"></h3>
+					    <small class="text-muted" v-text="contract.Date"></small>
+				    </div>
+			    </div>
+                <div :id="contract.Id(index)" class="collapse" :class="contract.active ? 'show' : ''" aria-labelledby="headingOne" data-parent="#accordionExample">
+                    <div class="card-body">
+                        <contract :contract="contract" :aIndex="aIndex"></contract>
+                    </div>
+			    </div>
+            </div>
+        </div>
+    `;
+	    
+	    var components = { contract };
+
+		return {
+	        template,
+	        props: ['household'],
+	        components,
+			data() {
+				return {
+	                aIndex: '',
+	//                state: ''
+				}
+			},
+			created() {
+	            this.init();
+			},
+			mounted() {
+	            //console.log('contracts mounted...')
+	            //this.aIndex = 0
+			},
+			destroyed() {
+			},
+			computed: {
+	            contracts() {
+	                var { household } = this;
+	                var contracts = household ? household.contracts : [];
+	                return contracts
+	                    .map(data => new Contract(data, household.accountNum))
 				}
 			},
 			methods: {
-				range(split) {
-					return Format.USD(split).toUpperCase()
-				},
-				rate(split, index) {
-					var { splits } = this;
-					var a = Format.USD(split).toUpperCase();
-					var b = Format.USD(splits[index++], true).toUpperCase();
-					return `${a} - ${b}`
+	            /*
+	            date(index) {
+	                var { contracts } = this
+	                var { end, start } = contracts[index]
+	                return `${start} - ${end || 'Present' }`
+	            },
+	            id(index, target) {
+	                var id = `contract-${index + 1}`
+	                return target ? `#${id}` : id
+	            },
+	            */
+	            init() {
+	                var { contracts } = this;
+	                var index = contracts
+	                    .findIndex(c => c.active);
+	                this.aIndex = index > -1 ? index : 0;
+	            },
+	            select(index) {
+	                //setTimeout(() => {
+	                    //console.log('select', index + 1)
+	                    //this.aIndex = index
+	                //}, 100)
+	//                this.aIndex = index
+	            },
+	            /*
+				status(index) {
+	                var { contracts } = this
+	                var { active } = contracts[index]
+					return active ? 'Active' : 'Archived'
+	            },
+	            target(index) {
+	                var { id } = this
+	                var tag = id(index)
+	                return `#${tag}`
+	            }
+	            */
+
+	        },
+			watch: {
+			}
+		}
+
+	});
+
+	app.module('component/chart', function() {
+
+	    var template = `
+        <div>
+            <canvas :id="id" :width="width" :height="height"></canvas>
+        </div>
+    `;
+
+	    return {
+	        template,
+	        props: ['data'],
+			data() {
+				return {
+	                chart: ''
 				}
 			},
+			created() {
+	            this.init();
+			},
+			mounted() {
+	            this.draw();
+			},
+			destroyed() {
+			},
+			computed: {
+	            id() {
+	                var { _uid: id } = this;
+	                return `chart-${id}`
+	            }
+	        },
+			methods: {
+	            draw() {
+	                var { data, id } = this;
+	                var { accounts, values } = data;
+	                var el = document.getElementById(id);
+	                var options = {
+	                    type: 'pie',
+	                    data: {
+	                        labels: accounts,
+	                        datasets: [
+	                            {
+	                                label: 'Distribution of Funds',
+	                                data: values,
+	                                backgroundColor: [
+	                                    'rgba(255, 99, 132, 0.2)',
+	                                    'rgba(54, 162, 235, 0.2)',
+	                                    'rgba(255, 206, 86, 0.2)',
+	                                    'rgba(75, 192, 192, 0.2)',
+	                                    'rgba(153, 102, 255, 0.2)',
+	                                    'rgba(255, 159, 64, 0.2)'
+	                                ],
+	                                    borderColor: [
+	                                        'rgba(255,99,132,1)',
+	                                        'rgba(54, 162, 235, 1)',
+	                                        'rgba(255, 206, 86, 1)',
+	                                        'rgba(75, 192, 192, 1)',
+	                                        'rgba(153, 102, 255, 1)',
+	                                        'rgba(255, 159, 64, 1)'
+	                                    ],
+	                                    borderWidth: 1
+	                                }
+	                            ]
+	                        }
+	    
+	                };
+	                this.chart = new Chart(el, options);
+	            },
+	            init() {
+	                this.width = 400;
+	                this.height = 400;
+	            },
+	        },
 			watch: {
 			}
 		}
@@ -237,11 +332,11 @@
 			<dl class="row">
 				<dt class="col-sm-2">Household Name</dt>
 				<dd class="col-sm-10">
-					<small v-text="name"></small>
+					<span v-text="name"></span>
 				</dd>
 				<dt class="col-sm-2">Account Number</dt>
 				<dd class="col-sm-10">
-					<span v-text="accountNumber"><span>
+					<span v-text="accountNumber"></span>
 				</dd>
 				<dt class="col-sm-2">Manager</dt>
 				<dd class="col-sm-10">
@@ -254,13 +349,12 @@
 
 		return {
 			template,
+			props: ['household'],
 			data() {
 				return {
-					session: ''
 				}
 			},
 			created() {
-				this.init();
 			},
 			mounted() {
 			},
@@ -268,26 +362,19 @@
 			},
 			computed: {
 				accountNumber() {
-					var { accountNum } = this.household;
-					return accountNum
-				},
-				household() {
-					var { household } = this.session.data;
-					return household || {}
+					var { household } = this;
+					return household ? (household.accountNum || '-') : ''
 				},
 				manager() {
-					var { manager } = this.household;
-					return manager
+					var { household } = this;
+					return household ? (household.manager || '-') : ''
 				},
 				name() {
-					var { name } = this.household;
-					return name
+					var { household } = this;
+					return household ? (household.name || '-') : ''
 				}
 			},
 			methods: {
-				init() {
-					this.session = session;
-				}
 			},
 			watch: {
 			}
@@ -295,9 +382,7 @@
 
 	});
 
-	app.module('component/navigation', function({ service }) {
-
-		var { blockchain, session } = service;
+	app.module('component/navbar', function() {
 
 		var template = `
 		<nav class="navbar navbar-expand-lg navbar-light bg-light shadow sticky-top">
@@ -333,7 +418,7 @@
 						<span>Select a Household</span>
 					</button>
 					<div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuButton">
-						<a class="dropdown-item" href="#" v-for="household in households">
+						<a class="dropdown-item" href="#" v-for="(household, index) in households" v-on:click="select('household', index)">
 							<span v-text="household.name"></span>
 						</a>
 			  			<div class="dropdown-divider"></div>
@@ -345,10 +430,10 @@
 	`;
 
 		return {
-			template,
+	        template,
+	        props: ['navbar'],
 			data() {
 				return {
-					session: ''
 				}
 			},
 			created() {
@@ -360,13 +445,20 @@
 			},
 			computed: {
 				households() {
-					var { households } = this.session.data;
+					var { households } = this.navbar;
 					return households
-				}
+	            }
 			},
 			methods: {
 				init() {
-					this.session = session;
+				},
+				select(type, index) {
+					var { navbar } = this;
+					switch(type) {
+	                    case 'household':
+	                        navbar.index = index;
+							break
+					}
 				}
 			},
 			watch: {
@@ -375,112 +467,203 @@
 
 	});
 
-	app.module('component/quarter', function({ factory, service }) {
+	app.module('component/quarter', function({ component, factory, service }) {
 
-	    var { Format } = factory;
-	    var { session } = service;
+	    var { chart } = component;
+	    var { Format, Sys } = factory;
+	    var { events } = service;
 
 	    var template = `
         <div class="quarter">
-            <h1 v-text="id"><h1>
-            <div class="row">
-                <div class="col-4">
-                    <div class="form-group" v-for="(split, index) in values" :key="index">
-                        <label :for="label(index)" v-text="accounts[index]"></label>
-                        <div class="input-group">
-                            <div class="input-group-prepend">
-                                <div class="input-group-text">$</div>
+            <template v-if="contract">
+                <h1 v-text="id"></h1>
+                <div class="row">
+                    <div class="col-4">
+                        <div class="form-group" v-for="(split, index) in values" :key="index">
+                            <label :for="label(index)" v-text="accounts[index]"></label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <div class="input-group-text">$</div>
+                                </div>
+                                <input type="text" class="form-control" :id="label(index)" aria-describedby="emailHelp" placeholder="Enter account ammount" :value="split | usd">
                             </div>
-                            <input type="text" class="form-control" :id="label(index)" aria-describedby="emailHelp" placeholder="Enter account ammount" :value="quarter.values[index] | Format.USD">
+                            <small id="emailHelp" class="form-text text-muted">Small note about something or other.</small>
                         </div>
-                        <small id="emailHelp" class="form-text text-muted">Small note about something or other.</small>
+                    </div>
+                    <div class="col-8">
+                        <chart :data="chartData"></chart>
                     </div>
                 </div>
-                <div class="col-8">
-                    <canvas id="chart" width="400" height="400"></canvas>
+            </template>
+        </div>
+    `;
+
+	    var components = { chart };
+
+	    var filters = {
+			usd: Format.USD
+		};
+
+	    return {
+	        template,
+	        props: ['household'],
+	        components,
+	        filters,
+			data() {
+				return {
+	                chart: '',
+	                contractAddress: '',
+	                quarterId: '',
+				}
+			},
+			created() {
+	            this.init();
+	            var { quarter } = this;
+	            this.events = { quarter: quarter.bind(this) };
+	            events.watch(this.events, this._uid);
+			},
+			mounted() {
+			},
+			destroyed() {
+	            events.unwatch(this.events, this._uid);
+			},
+			computed: {
+	            accounts() {
+	                var { contract } = this;
+	                return contract ? contract.accounts : []
+	            },
+	            contract() {
+	                var { contractAddress, household } = this;
+	                var contracts = household ? household.contracts : [];
+	                return contracts
+	                    .find(c => c.address == contractAddress)
+	            },
+	            chartData() {
+	                var { accounts, values } = this;
+	                return { accounts, values }
+	            },
+	            id() {
+	                var { quarterId } = this;
+	                return Format.Y_Q(quarterId)
+	            },
+	            values() {
+	                var { contract, quarterId } = this;
+	                var quarters = contract ? contract.quarters : [];
+	                var quarter = quarters
+	                    .find(q => q.id == quarterId);
+	                return quarter ? quarter.values : []
+	            }
+	        },
+			methods: {
+	            init() {
+	                this.contractAddress = '';
+	                this.quarterId = '';
+	            },
+	            async quarter(e) {
+	                this.init();
+	                console.log('quarter event...');
+	                var { contractAddress, quarterId } = e;
+	                await Sys.wait(100);
+	                this.contractAddress = contractAddress;
+	                this.quarterId = quarterId;
+	            },
+	            label(index) {
+	                return `account${index}`
+	            },
+	        },
+			watch: {
+	            household: {
+	                handler() {
+	                    console.log('household changed...');
+	                    this.init();
+	                },
+	                deep: true
+	            }
+			}
+		}
+
+	});
+
+	app.module('component/quarters', function({ model, service }) {
+
+	    var { Contract } = model;
+	    var { events } = service;
+
+	    var template = `
+        <div>
+            <p class="h6" v-text="year"></p>
+                <div class="btn-group btn-group-sm btn-group-toggle mb-3" data-toggle="buttons">
+                    <template v-for="(button, index) in buttons">
+                        <template v-if="quarter(quarters, index)">
+                            <label class="btn btn-outline-dark" :class="buttonIndex == index ? 'active' : ''" v-on:click="select(button)">
+                                <input type="radio" name="options">
+                                <span v-text="button.label"></span>
+                            </label>
+                        </template>
+                        <template v-else>
+                            <label class="btn btn-outline-dark disabled">
+                                <input type="radio" name="options">
+                                <span v-text="button.label"></span>
+                            </label>
+                        </template>
+                    </template>
                 </div>
-            </div>
+            </p>
         </div>
     `;
 
 	    return {
-			template,
+	        template,
+	        props: ['contract', 'year'],
 			data() {
 				return {
-	                chart: '',
-	                session: ''
+	                buttonIndex: '',
+	                buttons: ''
 				}
 			},
 			created() {
 	            this.init();
 			},
 			mounted() {
-	            this.doChart();
+	            var { buttons, contract } = this;
+	            if (contract.active && contract.Quarter) {
+	                var button = buttons
+	                    .find(b => b.id == contract.Quarter);
+	                if (button)
+	                    this.select(button);
+	            }
 			},
 			destroyed() {
 			},
 			computed: {
-	            accounts() {
-	                var { accounts } = this.contract;
-	                return accounts
-	            },
-	            contract() {
-	                var { contract } = this.session.data;
-	                return contract || {}
-	            },
-	            id() {
-	                var { id } = this.quarter;
-	                return Format.Y_Q(id)
-	            },
-	            quarter() {
-	                var { quarter } = this.session.data;
-	                return quarter || {}
-	            },
-	            values() {
-	                var { values } = this.contract;
-	                return values
+	            quarters() {
+	                var { contract, year } = this;
+	                return Contract.quarters(contract, year)
 	            }
 	        },
 			methods: {
-	            doChart() {
-	                var { accounts, values } = this;
-	                var el = document.getElementById('chart');
-	                var chart = {
-	                    type: 'pie',
-	                    data: {
-	                        labels: accounts,
-	                        datasets: [
-	                            {
-	                                label: 'Distribution of Funds',
-	                                data: values,
-	                                backgroundColor: [
-	                                    'rgba(255, 99, 132, 0.2)',
-	                                    'rgba(54, 162, 235, 0.2)',
-	                                    'rgba(255, 206, 86, 0.2)',
-	                                    'rgba(75, 192, 192, 0.2)',
-	                                    'rgba(153, 102, 255, 0.2)',
-	                                    'rgba(255, 159, 64, 0.2)'
-	                                ],
-	                                borderColor: [
-	                                    'rgba(255,99,132,1)',
-	                                    'rgba(54, 162, 235, 1)',
-	                                    'rgba(255, 206, 86, 1)',
-	                                    'rgba(75, 192, 192, 1)',
-	                                    'rgba(153, 102, 255, 1)',
-	                                    'rgba(255, 159, 64, 1)'
-	                                ],
-	                                borderWidth: 1
-	                            }
-	                        ]
-	                    }
-	                };
-	                this.chart = new Chart(el, chart);
-	            },
 	            init() {
-	                this.session = session;
+	                var { year } = this;
+	                var list = [1, 2, 3, 4];
+	                var buttons = list
+	                    .map((n) => {
+	                        var label = `Q${n}`;
+	                        var id = `${year}${1}`;
+	                        return { id, label }
+	                    });
+	                this.buttons = buttons;
 	            },
-	            label(index) {
-	                return `account${index}`
+	            quarter(quarters, index) {
+	                return quarters
+	                    .find(q => q.id && String(q.id).slice(4) == index + 1)
+	            },
+	            select(button) {
+	                var { contract, buttons } = this;
+	                var { id: quarterId } = button;
+	                this.buttonIndex = buttons
+	                    .findIndex(b => b.id == quarterId);
+	                var { accountNum, address: contractAddress } = contract;
+	                events.$emit('quarter', { accountNum, contractAddress, quarterId });
 	            }
 	        },
 			watch: {
@@ -495,7 +678,7 @@
 
 	    class Format {
 
-	        _numeral(a) {
+	        static _numeral(a) {
 	            return numeral(a / 1e6)
 	        }
 
@@ -507,7 +690,7 @@
 
 	        static Y_Q(a) {
 	            var str = String(a);
-	            return `${str.slice(1, 4)} ${str.slice(4)}`
+	            return `${str.slice(0, 4)} Q${str.slice(4)}`
 	        }
 
 	        static YMD(a) {
@@ -515,9 +698,12 @@
 	            return moment(a, `YYYYMMDD`).format(fmt)
 	        }
 
-	        static USD(a, short = false) {
-	            var fmt = short ? `$0a` : `00`;
-	            return Format._numeral(a).format(fmt)
+	        static _shortUSD(a) {
+	            return Format._numeral(a).format(`$a0`)
+	        } 
+
+	        static USD(a) {
+	            return typeof a == 'boolean' && a == true ? Format._shortUSD : Format._numeral(a).format(`00`)
 	        }
 
 	    }
@@ -580,6 +766,53 @@
 
 	});
 
+	app.module('factory/Model', function() {
+
+	    var reserved = ['_data'];
+
+	    class Model {
+
+	        constructor({ data = {}, ignore = [], required = [], defaults = {} }) {
+	            this._init(data, ignore, required, defaults);
+	        }
+
+	        _init(data, ignore, required, defaults) {
+	            required
+	                .forEach((key) => {
+	                    if (!data.hasOwnProperty(key))
+	                        throw new Error(`Sorry, model ${key} is required!`)
+	                });
+	            Object.keys(defaults)
+	                .forEach((key) => {
+	                    if (!data.hasOwnProperty(key))
+	                        data[key] = defaults[key];
+	                });
+	            this._data = data;
+	            var configurable = true;
+	            Object.keys(data)
+	                .forEach((key) => {
+	                    if (reserved.indexOf(key) > -1)
+	                        throw new Error(`Sorry, model ${key} is reserved!`)
+	                    if (ignore.indexOf(key) > -1)
+	                        return
+	                    Object.defineProperty(this, key, {
+	                        get() {
+	                            return this._data[key]
+	                        },
+	                        set(v) {
+	                            this._data[key] = v;
+	                        },
+	                        configurable
+	                    });
+	                });
+	        }
+
+	    }
+
+	    return Model
+
+	});
+
 	app.module('factory/store', function() {
 
 		var households = [
@@ -591,7 +824,7 @@
 					{
 						active: true,
 						address: '0xd1Df4eFc6b7d47D00E21566B668a9cbbBf5D26D0',
-						executed: '20180118',
+						executed: '20180623',
 						pdfLink: 'https://docusign.com/skx/xyz.pdf',
 						auditLink: 'https://etherscan.io/address/0xd1Df4eFc6b7d47D00E21566B668a9cbbBf5D26D0',
 						splits: [
@@ -638,18 +871,41 @@
 									150000000000,
 									325000000000
 								]
+				  			},
+				  			{
+								id: 20184,
+								values: [
+									250000000000,
+									10000000000,
+									500000000000,
+									15000000000,
+									150000000000,
+									325000000000
+								]
+				  			},
+				  			{
+								id: 20191,
+								values: [
+									250000000000,
+									10000000000,
+									5000000000,
+									1500000000000,
+									150000000000,
+									325000000000
+								]
 				  			}
+
 						]
 			  		},
 			  		{
 						active: false,
 						address: '0xd1Df4eFc6b7d47D00E21566B668a9cbbBf5D2XXX',
-						executed: '20160527',
+						executed: '20170527',
 						pdfLink: 'https://docusign.com/skx/abc.pdf',
 						auditLink: 'https://etherscan.io/address/0xd1Df4eFc6b7d47D00E21566B668a9cbbBf5D2XXX',
 						splits: [0,1000000000000,3000000000000,5000000000000],
 						bps: [10000, 8000, 6000, 4000],
-						start: 20163,
+						start: 20173,
 						end: 20181,
 						accounts: [
 							'B IRA',
@@ -660,7 +916,17 @@
 						],
 						quarters: [
 							{
-								id: 20182,
+								id: 20173,
+								values: [
+									2500000000,
+									100000000,
+									5000000000,
+									15000000000,
+									150000000000
+								]
+							},
+							{
+								id: 20174,
 								values: [
 									250000000000,
 									10000000000,
@@ -670,7 +936,7 @@
 								]
 							},
 							{
-								id: 20183,
+								id: 20174,
 								values: [
 									250000000000,
 									10000000000,
@@ -731,8 +997,183 @@
 				]
 			},
 			{
+				name: 'Liu Kang Family',
+				accountNum: 732665010,
+				manager: 'Money Manager Freddy',
+				contracts: [
+					{
+						active: true,
+						address: '0xd1Df4eFc6b7d47D00E21566B668a9cbbBf5D26D0',
+						executed: '20190218',
+						pdfLink: 'https://docusign.com/skx/xyz.pdf',
+						auditLink: 'https://etherscan.io/address/0xd1Df4eFc6b7d47D00E21566B668a9cbbBf5D26D0',
+						splits: [
+							0,
+							1000000000000,
+							3000000000000,
+							5000000000000
+						],
+						bps: [
+							10000,
+							8000,
+							6000,
+							4000
+						],
+						start: 20184,
+						end: null,
+						accounts: [
+							'B IRA',
+							'S IRA',
+							'B&S',
+							'B Taxable',
+							'S Taxable',
+							'Kid Account'
+						],
+						quarters: [
+				  			{
+								id: 20184,
+								values: [
+									2500000000,
+									100000000,
+									500000000000,
+									15000000000,
+									1500000000,
+									3250000000
+								]
+				  			},
+				  			{
+								id: 20191,
+								values: [
+									250000000000,
+									10000000000,
+									500000000000,
+									1500000000000,
+									150000000000,
+									325000000000
+								]
+				  			}
+						]
+			  		},
+			  		{
+						active: false,
+						address: '0xd1Df4eFc6b7d47D00E21566B668a9cbbBf5D2XXX',
+						executed: '20150921',
+						pdfLink: 'https://docusign.com/skx/abc.pdf',
+						auditLink: 'https://etherscan.io/address/0xd1Df4eFc6b7d47D00E21566B668a9cbbBf5D2XXX',
+						splits: [0,1000000000000,3000000000000,5000000000000],
+						bps: [10000, 8000, 6000, 4000],
+						start: 20173,
+						end: 20181,
+						accounts: [
+							'B IRA',
+							'S IRA',
+							'B&S',
+							'B Taxable',
+							'S Taxable'
+						],
+						quarters: [
+							{
+								id: 20173,
+								values: [
+									250000000000,
+									10000000000,
+									5000000000,
+									150000000000,
+									150000000000
+								]
+							},
+							{
+								id: 20174,
+								values: [
+									2500000000,
+									10000000000,
+									500000000000,
+									150000000000,
+									150000000000
+								]
+							},
+							{
+								id: 20174,
+								values: [
+									2500000000,
+									10000000000,
+									500000000000,
+									150000000000,
+									150000000000
+								]
+							}
+						]
+					},
+			  		{
+						active: false,
+						address: '0xd1Df4eFc6b7d47D00E21566B668a9cbbBf5D2YYY',
+						executed: '20140521',
+						pdfLink: 'https://docusign.com/skx/abc.pdf',
+						auditLink: 'https://etherscan.io/address/0xd1Df4eFc6b7d47D00E21566B668a9cbbBf5D2YYY',
+						splits: [
+							0,
+							1000000000000,
+							3000000000000,
+							4000000000000
+						],
+						bps: [
+							10000,
+							8000,
+							6000,
+							4000
+						],
+						start: 20161,
+						end: 20164,
+						accounts: [
+							'B IRA',
+							'S IRA',
+							'B&S',
+							'B Taxable'
+						],
+						quarters: [
+							{
+								id: 20161,
+								values: [
+									550000000000,
+									30000000000,
+									700000000000,
+									7500000000000
+								]
+							},
+							{
+								id: 20162,
+								values: [
+									250000000000,
+									10000000000,
+									500000000000,
+									1500000000000
+								]
+							},
+							{
+								id: 20163,
+								values: [
+									450000000000,
+									10000000000,
+									400000000000,
+									2500000000000
+								]
+							},
+							{
+								id: 20164,
+								values: [
+									750000000000,
+									30000000000,
+									500000000000,
+									1500000000000
+								]
+							}
+						]
+					}
+				]
+			},
+			{
 			  name: 'Mary Williams Family',
-			  contractHash: '0xd1Df4eFc6b7d47D00E21566B668a9cbbBf5D26D0'
+			  contractHash: '0xd1Df4eFc6b7d47D00E21566B676a9cbbBf5D26D0'
 			},
 			{
 			  name: 'Greg Andrews Family',
@@ -741,6 +1182,160 @@
 		];
 
 		return { households }
+
+	});
+
+	app.module('factory/Sys', function() {
+
+	    class Sys {
+
+	        static wait(ms) {
+	            return new Promise(resolve => setTimeout(resolve, ms))
+	        }
+
+	    }
+
+	    return Sys
+	    
+	});
+
+	app.module('model/Contract', function({ factory }) {
+
+	    var { Format, Model } = factory;
+
+	    var required = ['accountNum'];
+
+	    class Contract extends Model {
+
+	        constructor(data, accountNum) {
+	            if (accountNum)
+	                data.accountNum = accountNum;
+	            data.Quarter = 0;
+	            super({ data, required });
+	        }
+
+	        get Accounts() {
+	            var { accounts } = this;
+	            var n = Array.isArray(accounts) ? accounts.length : 0;
+				return `Accounts: ${n}`
+	        }
+
+	        get Date() {
+	            var { end, start } = this;
+	            return `${start} - ${end || 'Present' }`
+	        }
+
+	        get Executed() {
+				var { executed: date } = this;
+				var executed = Format.YMD(date).toUpperCase();
+				return `Executed: ${executed}`
+	        }
+
+	        get Status() {
+	            var { active } = this;
+	            return active ? 'Active' : 'Archived'
+	        }
+
+	        static quarters(c, year) {
+	            var quarters = c ? c.quarters : [];
+	            return quarters
+	                .filter(q => q.id && String(q.id).slice(0, 4) == year)
+	        }
+
+	        static year(n) {
+	            return n ? +String(n).slice(0, 4) : new Date().getFullYear()
+	        }
+
+	        get Years() {
+	            var end = Contract.year(this.end);
+	            var start = Contract.year(this.start);
+	            var years = start == end ? [start] : [start, end];
+	            while(end - start > 1) {
+	                start++;
+	                years.splice(1, 0, start);
+	            }
+	            return years
+	                .reverse()
+	        }
+
+	        Range(index) {
+				var { splits } = this;
+	            var shortUSD = Format.USD(true);
+	            var a, z;
+	            if (Array.isArray(splits)) {
+	                a = splits[index];
+	                z = splits[index + 1];
+	            }
+				return `${Format.USD(a || 0).toUpperCase()} - ${shortUSD(z || 0).toUpperCase()}`
+	        }
+
+	        Rate(index) {
+	            var { bps } = this;
+	            var rate = Array.isArray(bps) ? bps[index] : 0;
+				return Format.BPS(rate).toUpperCase()
+	        }
+
+	        Id(index, target) {
+	            var id = `contract-${index + 1}`;
+	            return target ? `#${id}` : id
+	        }
+
+	    }
+
+	    return Contract
+
+	});
+
+	app.module('model/Household', function({ factory }) {
+
+	    var { Model } = factory;
+
+	    var Quarter = { contractAddress: '', id: '' };
+
+	    class Household extends Model {
+
+	        constructor(data) {
+	            data.Quarter = Quarter;
+	            super({ data });
+	        }
+
+	    }
+
+	    return Household
+
+	});
+
+	app.module('model/Quarter', function({ factory }) {
+
+	    var { Model } = factory;
+
+	    var defaults = { select: false };
+	    var required = ['accountNum', 'contractAddress', 'id'];
+
+	    class Quarter extends Model {
+
+	        constructor(data, accountNum, contractAddress) {
+	            if (contractAddress)
+	                data.contractAddress = contractAddress;
+	            if (accountNum)
+	                data.accountNum = accountNum;
+	            super({ data, required, defaults });
+	        }
+
+	        get label() {
+	            var { id } = this;
+	            var N = String(id).slice(4);
+	            return `Q${N}`
+	        }
+
+	        get year() {
+	            var { id } = this;
+	            return +String(id).slice(0, 4)
+	        }
+
+	    }
+
+	    return Quarter
 
 	});
 
@@ -768,15 +1363,16 @@
 	                throw new Error(`Non-Ethereum browser detected. You should consider trying MetaMask!`)
 	        }
 
-	        static async transaction(tx) {
+	        static dummyData() {
 	            var { households } = store;
-	            return households
-	            /*
-	            var { eth } = data.web3 || {}
+	            return households 
+	        }
+
+	        static async transaction(tx) {
+	            var { eth } = data.web3 || {};
 	            if (!eth)
 	                throw new Error(`Not connected!`)
 	            return eth.sendTransaction(tx)
-	            */
 	        }
 
 	    }
@@ -785,96 +1381,131 @@
 
 	});
 
-	app.module('service/session', function() {
+	app.module('service/events', function() {
 
-	    var data = {};
+	    var watchers = [];
 
-	    class Session {
+		class Events {
 
-	        static get data() {
-	            return data
-	        }
+			static $emit(event, data) {
+	            watchers
+	                .forEach((w) => {
+					    if (w.event == event)
+						    w.callback(data);
+				    });
+			}
 
-	        static init() {
-	            data.households = [];
-	            data.household = '';
-	            data.contract = '';
-	            data.quarter = '';
-	        }
-	    }
+			static $off(event, id) {
+	            var index = watchers
+	                .find(w => w.event == event && w.id == id);
+	            if (index < 0)
+	                throw new Error(`Sorry, no watcher found for event: ${event}, id: ${id}!`)
+				watchers.splice(index, 1);
+			}
 
-	    return Session
+			static $on(event, id, callback) {
+	            var index = watchers
+	                .find(w => w.event == event && w.id == id);
+	            if (index > -1)
+	                throw new Error(`Sorry, duplicate watcher for event: ${event}, id: ${id}!`)
+				watchers.push({ event, id, callback });
+			}
+
+			static unwatch(events, id) {
+				for (var event in events) {
+					Events.$off(event, id);
+				}
+			}
+
+			static watch(events, id) {
+				for (var event in events) {
+					Events.$on(event, id, events[event]);
+				}
+			}
+
+		}
+
+		return Events
 
 	});
 
-	app.module('view/main', function({ component, service }) {
+	//import './session'
 
-		var { contract, householdHeader, quarter, navigation } = component;
+	app.module('view/main', function({ component, model, service, view }) {
+
+		var { contracts, householdHeader, navbar, quarter } = component;
+		var { Household } = model;
 		var { blockchain } = service;
 
-		var { session } = service;
+		var { Vue } = window;
 
 		var template = `
 		<div>
-	    	<navigation></navigation>
-    		<div class="container-fluid">
-    			<household-header></household-header>
+			<navbar :navbar="navbar"></navbar>
+			<div class="container-fluid">
+				<household-header :household="household"></household-header>
       			<div class="row">
         			<div class="col-4 border-bottom mt-3">
-          				<h3>Contracts</h3>
-						<div class="accordion" id="accordionExample">
-							<template v-for="(contract, index) in contracts" :key="index">
-								<contract :contract="contract"></contract>
-							</template>
-          				</div>
-        			</div>
+						<h3>Contracts</h3>
+						<contracts :household="household"></contracts>
+					</div>
         			<div class="col-8">
-          				<quarter></quarter>
-        			</div>
-      			</div>
+          				<quarter :household="household"></quarter>
+					</div>
+				</div>
 			</div>
 		</div>
     `;
 
-	    var components = { contract, navigation, householdHeader, quarter, navigation };
-
+		var components = { contracts, householdHeader, navbar, quarter };
 
 	    new Vue({
 			el: '#app',
 			template,
 			components,
 			data: {
-				session: ''
+				components: '',
+				navbar: ''
 			},
 			created() {
 				this.init();
 			},
-			async mounted() {
-				var { households } = this.session.data;
-				try {
-					households.length = 0;
-					await blockchain.connect();
-					households.push(...await blockchain.transaction(/* ... */));
-				} catch(e) {
-					console.log(e);
-				}
+			mounted() {
 			},
 			destroyed() {
 			},
 			computed: {
-				contracts() {
-					var { household } = this.session.data;
-					var { contracts } = household || {};
-					return contracts || []
+				household() {
+					var { index, households } = this.navbar;
+					return households[index]
+				},
+				households() {
+					var { households } = this.navbar;
+					return households
+				},
+				householdIndex() {
+					var { index } = this.navbar;
+					return index
 				}
 			},
 			watch: {
 			},
 			methods: {
 				init() {
-					session.init();
-					this.session = session;
-				} 
+					this.navbar = { households: [], index: 0 };
+					this.load();
+				},
+				async load() {
+					var { navbar } = this;
+					navbar.index = 0;
+					try {
+						var households = await blockchain.dummyData();
+						navbar.households.push(...households.map(h => new Household(h)));
+						console.log({ navbar });
+					} catch(e) {
+						console.log(e);
+					}
+				}
 			}
 		});
 

@@ -1,4 +1,7 @@
 import './contract'
+import './contracts'
+import './chart'
 import './household-header'
-import './navigation'
+import './navbar'
 import './quarter'
+import './quarters'

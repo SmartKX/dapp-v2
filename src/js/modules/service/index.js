@@ -1,2 +1,3 @@
 import './blockchain'
-import './session'
+import './events'
+//import './session'

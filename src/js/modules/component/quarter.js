@@ -1,112 +1,115 @@
-app.module('component/quarter', function({ factory, service }) {
+app.module('component/quarter', function({ component, factory, service }) {
 
-    var { Format } = factory
-    var { session } = service
+    var { chart } = component
+    var { Format, Sys } = factory
+    var { events } = service
 
     var template = `
         <div class="quarter">
-            <h1 v-text="id"><h1>
-            <div class="row">
-                <div class="col-4">
-                    <div class="form-group" v-for="(split, index) in values" :key="index">
-                        <label :for="label(index)" v-text="accounts[index]"></label>
-                        <div class="input-group">
-                            <div class="input-group-prepend">
-                                <div class="input-group-text">$</div>
+            <template v-if="contract">
+                <h1 v-text="id"></h1>
+                <div class="row">
+                    <div class="col-4">
+                        <div class="form-group" v-for="(split, index) in values" :key="index">
+                            <label :for="label(index)" v-text="accounts[index]"></label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <div class="input-group-text">$</div>
+                                </div>
+                                <input type="text" class="form-control" :id="label(index)" aria-describedby="emailHelp" placeholder="Enter account ammount" :value="split | usd">
                             </div>
-                            <input type="text" class="form-control" :id="label(index)" aria-describedby="emailHelp" placeholder="Enter account ammount" :value="quarter.values[index] | Format.USD">
+                            <small id="emailHelp" class="form-text text-muted">Small note about something or other.</small>
                         </div>
-                        <small id="emailHelp" class="form-text text-muted">Small note about something or other.</small>
+                    </div>
+                    <div class="col-8">
+                        <chart :data="chartData"></chart>
                     </div>
                 </div>
-                <div class="col-8">
-                    <canvas id="chart" width="400" height="400"></canvas>
-                </div>
-            </div>
+            </template>
         </div>
     `
 
+    var components = { chart }
+
+    var filters = {
+		usd: Format.USD
+	}
+
     return {
-		template,
+        template,
+        props: ['household'],
+        components,
+        filters,
 		data() {
 			return {
                 chart: '',
-                session: ''
+                contractAddress: '',
+                quarterId: '',
 			}
 		},
 		created() {
             this.init()
+            var { quarter } = this
+            this.events = { quarter: quarter.bind(this) }
+            events.watch(this.events, this._uid)
 		},
 		mounted() {
-            this.doChart()
 		},
 		destroyed() {
+            events.unwatch(this.events, this._uid)
 		},
 		computed: {
             accounts() {
-                var { accounts } = this.contract
-                return accounts
+                var { contract } = this
+                return contract ? contract.accounts : []
             },
             contract() {
-                var { contract } = this.session.data
-                return contract || {}
+                var { contractAddress, household } = this
+                var contracts = household ? household.contracts : []
+                return contracts
+                    .find(c => c.address == contractAddress)
+            },
+            chartData() {
+                var { accounts, values } = this
+                return { accounts, values }
             },
             id() {
-                var { id } = this.quarter
-                return Format.Y_Q(id)
-            },
-            quarter() {
-                var { quarter } = this.session.data
-                return quarter || {}
+                var { quarterId } = this
+                return Format.Y_Q(quarterId)
             },
             values() {
-                var { values } = this.contract
-                return values
+                var { contract, quarterId } = this
+                var quarters = contract ? contract.quarters : []
+                var quarter = quarters
+                    .find(q => q.id == quarterId)
+                return quarter ? quarter.values : []
             }
         },
 		methods: {
-            doChart() {
-                var { accounts, values } = this
-                var el = document.getElementById('chart')
-                var chart = {
-                    type: 'pie',
-                    data: {
-                        labels: accounts,
-                        datasets: [
-                            {
-                                label: 'Distribution of Funds',
-                                data: values,
-                                backgroundColor: [
-                                    'rgba(255, 99, 132, 0.2)',
-                                    'rgba(54, 162, 235, 0.2)',
-                                    'rgba(255, 206, 86, 0.2)',
-                                    'rgba(75, 192, 192, 0.2)',
-                                    'rgba(153, 102, 255, 0.2)',
-                                    'rgba(255, 159, 64, 0.2)'
-                                ],
-                                borderColor: [
-                                    'rgba(255,99,132,1)',
-                                    'rgba(54, 162, 235, 1)',
-                                    'rgba(255, 206, 86, 1)',
-                                    'rgba(75, 192, 192, 1)',
-                                    'rgba(153, 102, 255, 1)',
-                                    'rgba(255, 159, 64, 1)'
-                                ],
-                                borderWidth: 1
-                            }
-                        ]
-                    }
-                }
-                this.chart = new Chart(el, chart)
-            },
             init() {
-                this.session = session
+                this.contractAddress = ''
+                this.quarterId = ''
+            },
+            async quarter(e) {
+                this.init()
+                console.log('quarter event...')
+                var { contractAddress, quarterId } = e
+                await Sys.wait(100)
+                this.contractAddress = contractAddress
+                this.quarterId = quarterId
             },
             label(index) {
                 return `account${index}`
-            }
+            },
         },
 		watch: {
+            household: {
+                handler() {
+                    console.log('household changed...')
+                    this.init()
+                },
+                deep: true
+            }
 		}
 	}
 

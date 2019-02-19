@@ -1,6 +1,4 @@
-app.module('component/navigation', function({ service }) {
-
-	var { blockchain, session } = service
+app.module('component/navbar', function() {
 
 	var template = `
 		<nav class="navbar navbar-expand-lg navbar-light bg-light shadow sticky-top">
@@ -36,7 +34,7 @@ app.module('component/navigation', function({ service }) {
 						<span>Select a Household</span>
 					</button>
 					<div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuButton">
-						<a class="dropdown-item" href="#" v-for="household in households">
+						<a class="dropdown-item" href="#" v-for="(household, index) in households" v-on:click="select('household', index)">
 							<span v-text="household.name"></span>
 						</a>
 			  			<div class="dropdown-divider"></div>
@@ -48,10 +46,10 @@ app.module('component/navigation', function({ service }) {
 	`
 
 	return {
-		template,
+        template,
+        props: ['navbar'],
 		data() {
 			return {
-				session: ''
 			}
 		},
 		created() {
@@ -63,13 +61,20 @@ app.module('component/navigation', function({ service }) {
 		},
 		computed: {
 			households() {
-				var { households } = this.session.data
+				var { households } = this.navbar
 				return households
-			}
+            }
 		},
 		methods: {
 			init() {
-				this.session = session
+			},
+			select(type, index) {
+				var { navbar } = this
+				switch(type) {
+                    case 'household':
+                        navbar.index = index
+						break
+				}
 			}
 		},
 		watch: {

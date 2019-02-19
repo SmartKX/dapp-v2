@@ -22,15 +22,16 @@ app.module('service/blockchain', function({ factory }) {
                 throw new Error(`Non-Ethereum browser detected. You should consider trying MetaMask!`)
         }
 
-        static async transaction(tx) {
+        static dummyData() {
             var { households } = store
-            return households
-            /*
+            return households 
+        }
+
+        static async transaction(tx) {
             var { eth } = data.web3 || {}
             if (!eth)
                 throw new Error(`Not connected!`)
             return eth.sendTransaction(tx)
-            */
         }
 
     }

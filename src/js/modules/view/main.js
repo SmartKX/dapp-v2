@@ -1,71 +1,77 @@
-app.module('view/main', function({ component, service }) {
+app.module('view/main', function({ component, model, service }) {
 
-	var { contract, householdHeader, quarter, navigation } = component
-	var { blockchain, session } = service
+	var { contracts, householdHeader, navbar, quarter } = component
+	var { Household } = model
+	var { blockchain } = service
 
 	var { Vue } = window
 
 	var template = `
 		<div>
-	    	<navigation></navigation>
-    		<div class="container-fluid">
-    			<household-header></household-header>
+			<navbar :navbar="navbar"></navbar>
+			<div class="container-fluid">
+				<household-header :household="household"></household-header>
       			<div class="row">
         			<div class="col-4 border-bottom mt-3">
-          				<h3>Contracts</h3>
-						<div class="accordion" id="accordionExample">
-							<template v-for="(contract, index) in contracts" :key="index">
-								<contract :contract="contract"></contract>
-							</template>
-          				</div>
-        			</div>
+						<h3>Contracts</h3>
+						<contracts :household="household"></contracts>
+					</div>
         			<div class="col-8">
-          				<quarter></quarter>
-        			</div>
-      			</div>
+          				<quarter :household="household"></quarter>
+					</div>
+				</div>
 			</div>
 		</div>
     `
 
-    var components = { contract, navigation, householdHeader, quarter, navigation }
-
+	var components = { contracts, householdHeader, navbar, quarter }
 
     new Vue({
 		el: '#app',
 		template,
 		components,
 		data: {
-			session: ''
+			components: '',
+			navbar: ''
 		},
 		created() {
 			this.init()
 		},
-		async mounted() {
-			var { households } = this.session.data
-			try {
-				households.length = 0
-				await blockchain.connect()
-				households.push(...await blockchain.transaction(/* ... */))
-			} catch(e) {
-				console.log(e)
-			}
+		mounted() {
 		},
 		destroyed() {
 		},
 		computed: {
-			contracts() {
-				var { household } = this.session.data
-				var { contracts } = household || {}
-				return contracts || []
+			household() {
+				var { index, households } = this.navbar
+				return households[index]
+			},
+			households() {
+				var { households } = this.navbar
+				return households
+			},
+			householdIndex() {
+				var { index } = this.navbar
+				return index
 			}
 		},
 		watch: {
 		},
 		methods: {
 			init() {
-				session.init()
-				this.session = session
-			} 
+				this.navbar = { households: [], index: 0 }
+				this.load()
+			},
+			async load() {
+				var { navbar } = this
+				navbar.index = 0
+				try {
+					var households = await blockchain.dummyData()
+					navbar.households.push(...households.map(h => new Household(h)))
+				} catch(e) {
+					console.log(e)
+				}
+			}
 		}
 	})
 

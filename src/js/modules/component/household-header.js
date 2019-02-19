@@ -7,11 +7,11 @@ app.module('component/householdHeader', function() {
 			<dl class="row">
 				<dt class="col-sm-2">Household Name</dt>
 				<dd class="col-sm-10">
-					<small v-text="name"></small>
+					<span v-text="name"></span>
 				</dd>
 				<dt class="col-sm-2">Account Number</dt>
 				<dd class="col-sm-10">
-					<span v-text="accountNumber"><span>
+					<span v-text="accountNumber"></span>
 				</dd>
 				<dt class="col-sm-2">Manager</dt>
 				<dd class="col-sm-10">
@@ -24,13 +24,12 @@ app.module('component/householdHeader', function() {
 
 	return {
 		template,
+		props: ['household'],
 		data() {
 			return {
-				session: ''
 			}
 		},
 		created() {
-			this.init()
 		},
 		mounted() {
 		},
@@ -38,26 +37,19 @@ app.module('component/householdHeader', function() {
 		},
 		computed: {
 			accountNumber() {
-				var { accountNum } = this.household
-				return accountNum
-			},
-			household() {
-				var { household } = this.session.data
-				return household || {}
+				var { household } = this
+				return household ? (household.accountNum || '-') : ''
 			},
 			manager() {
-				var { manager } = this.household
-				return manager
+				var { household } = this
+				return household ? (household.manager || '-') : ''
 			},
 			name() {
-				var { name } = this.household
-				return name
+				var { household } = this
+				return household ? (household.name || '-') : ''
 			}
 		},
 		methods: {
-			init() {
-				this.session = session
-			}
 		},
 		watch: {
 		}
