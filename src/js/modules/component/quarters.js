@@ -3,13 +3,15 @@ app.module('component/quarters', function({ model, service }) {
     var { Contract } = model
     var { events } = service
 
+    var { Vue } = window
+
     var template = `
         <div>
             <p class="h6" v-text="year"></p>
                 <div class="btn-group btn-group-sm btn-group-toggle mb-3" data-toggle="buttons">
-                    <template v-for="(button, index) in buttons">
+                    <template v-for="(button, index) in buttons.list">
                         <template v-if="quarter(quarters, index)">
-                            <label class="btn btn-outline-dark" :class="buttonIndex == index ? 'active' : ''" v-on:click="select(button)">
+                            <label class="btn btn-outline-dark" :class="buttons.index == index ? 'active' : ''" v-on:click="select(index)">
                                 <input type="radio" name="options">
                                 <span v-text="button.label"></span>
                             </label>
@@ -28,24 +30,16 @@ app.module('component/quarters', function({ model, service }) {
 
     return {
         template,
-        props: ['contract', 'year'],
+        props: ['buttons', 'contract', 'year'],
 		data() {
 			return {
-                buttonIndex: '',
-                buttons: ''
 			}
 		},
 		created() {
             this.init()
 		},
 		mounted() {
-            var { buttons, contract } = this
-            if (contract.active && contract.Quarter) {
-                var button = buttons
-                    .find(b => b.id == contract.Quarter)
-                if (button)
-                    this.select(button)
-            }
+            this.preSelect()
 		},
 		destroyed() {
 		},
@@ -57,25 +51,37 @@ app.module('component/quarters', function({ model, service }) {
         },
 		methods: {
             init() {
-                var { year } = this
+                var { buttons, year } = this
                 var list = [1, 2, 3, 4]
-                var buttons = list
-                    .map((n) => {
-                        var label = `Q${n}`
-                        var id = `${year}${1}`
-                        return { id, label }
-                    })
-                this.buttons = buttons
+                if (!buttons.index) {
+                    Vue.set(buttons, 'index', -1)
+                    var list = [1, 2, 3, 4]
+                        .map((n) => {
+                            var label = `Q${n}`
+                            var id = `${year}${n}`
+                            return { id, label }
+                        })
+                    Vue.set(buttons, 'list', list)
+                }
+            },
+            preSelect() {
+                var { buttons, contract } = this
+                if (contract.active && contract.Quarter) {
+                    var index = buttons.list
+                        .findIndex(b => b.id == contract.Quarter)
+                    if (index > -1)
+                        this.select(index)
+                }
             },
             quarter(quarters, index) {
                 return quarters
                     .find(q => q.id && String(q.id).slice(4) == index + 1)
             },
-            select(button) {
+            select(index) {
                 var { contract, buttons } = this
+                buttons.index = index
+                var button = buttons.list[index]
                 var { id: quarterId } = button
-                this.buttonIndex = buttons
-                    .findIndex(b => b.id == quarterId)
                 var { accountNum, address: contractAddress } = contract
                 events.$emit('quarter', { accountNum, contractAddress, quarterId })
             }

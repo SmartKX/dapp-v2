@@ -1,6 +1,7 @@
-app.module('component/contract', function({ component }) {
+app.module('component/contract', function({ component, service }) {
 
 	var { quarters } = component
+	var { events } = service
 
 	var template = `
 		<div class="row">
@@ -17,7 +18,7 @@ app.module('component/contract', function({ component }) {
 					</small>	
 				</p>
 				<template v-for="year in contract.Years">
-					<quarters :contract="contract" :year="year"></quarters>
+					<quarters :buttons="buttons[year]" :contract="contract" :year="year"></quarters>
 				</template>
 			</div>
 			<div class="col">
@@ -48,10 +49,14 @@ app.module('component/contract', function({ component }) {
 		props: ['contract'],
 		data() {
 			return {
+				buttons: ''
 			}
 		},
 		created() {
+			var { quarter } = this
 			this.init()
+			this.events = { quarter: quarter.bind(this) }
+			events.watch(this.events, this._uid)
 		},
 		mounted() {
 		},
@@ -67,7 +72,22 @@ app.module('component/contract', function({ component }) {
 						.sort((a, b) => b.id - a.id)
 					if (quarter)
 						contract.Quarter = quarter.id
-                }
+				}
+				var buttons = {}
+				contract.Years
+					.forEach((year) => {
+						buttons[year] = {}
+					})
+				this.buttons = buttons
+			},
+			quarter(e) {
+				var { buttons, contract } = this
+				var year = e.quarterId.slice(0, 4)
+				Object.keys(buttons)
+					.forEach((key) => {
+						if (key != year || e.accountNum != contract.accountNum || e.contractAddress != contract.address)
+							buttons[key].index = -1
+					})
 			}
 		},
 		watch: {

@@ -70,9 +70,10 @@
 
 	var app = new App();
 
-	app.module('component/contract', function({ component }) {
+	app.module('component/contract', function({ component, service }) {
 
 		var { quarters } = component;
+		var { events } = service;
 
 		var template = `
 		<div class="row">
@@ -89,7 +90,7 @@
 					</small>	
 				</p>
 				<template v-for="year in contract.Years">
-					<quarters :contract="contract" :year="year"></quarters>
+					<quarters :buttons="buttons[year]" :contract="contract" :year="year"></quarters>
 				</template>
 			</div>
 			<div class="col">
@@ -120,10 +121,14 @@
 			props: ['contract'],
 			data() {
 				return {
+					buttons: ''
 				}
 			},
 			created() {
+				var { quarter } = this;
 				this.init();
+				this.events = { quarter: quarter.bind(this) };
+				events.watch(this.events, this._uid);
 			},
 			mounted() {
 			},
@@ -139,7 +144,22 @@
 							.sort((a, b) => b.id - a.id);
 						if (quarter)
 							contract.Quarter = quarter.id;
-	                }
+					}
+					var buttons = {};
+					contract.Years
+						.forEach((year) => {
+							buttons[year] = {};
+						});
+					this.buttons = buttons;
+				},
+				quarter(e) {
+					var { buttons, contract } = this;
+					var year = e.quarterId.slice(0, 4);
+					Object.keys(buttons)
+						.forEach((key) => {
+							if (key != year || e.accountNum != contract.accountNum || e.contractAddress != contract.address)
+								buttons[key].index = -1;
+						});
 				}
 			},
 			watch: {
@@ -156,17 +176,17 @@
 	    var template = `
         <div class="accordion" id="accordionExample">
             <div class="card" v-for="(contract, index) in contracts">
-			    <div class="card-header" id="headingOne" v-on:click="select(index)">
-				    <div data-toggle="collapse" :data-target="contract.Id(index, true)" :aria-expanded="contract.active" aria-controls="collapseOne">
-					    <h3 v-text="contract.Status"></h3>
-					    <small class="text-muted" v-text="contract.Date"></small>
-				    </div>
-			    </div>
+                <div class="card-header" id="headingOne">
+                    <div data-toggle="collapse" :data-target="contract.Id(index, true)" :aria-expanded="contract.active" aria-controls="collapseOne">
+                        <h3 v-text="contract.Status"></h3>
+                        <small class="text-muted" v-text="contract.Date"></small>
+                    </div>
+                </div>
                 <div :id="contract.Id(index)" class="collapse" :class="contract.active ? 'show' : ''" aria-labelledby="headingOne" data-parent="#accordionExample">
                     <div class="card-body">
                         <contract :contract="contract" :aIndex="aIndex"></contract>
                     </div>
-			    </div>
+                </div>
             </div>
         </div>
     `;
@@ -179,17 +199,14 @@
 	        components,
 			data() {
 				return {
-	                aIndex: '',
-	//                state: ''
+	                aIndex: ''
 				}
 			},
 			created() {
 	            this.init();
 			},
 			mounted() {
-	            //console.log('contracts mounted...')
-	            //this.aIndex = 0
-			},
+	        },
 			destroyed() {
 			},
 			computed: {
@@ -198,46 +215,15 @@
 	                var contracts = household ? household.contracts : [];
 	                return contracts
 	                    .map(data => new Contract(data, household.accountNum))
-				}
+	            }
 			},
 			methods: {
-	            /*
-	            date(index) {
-	                var { contracts } = this
-	                var { end, start } = contracts[index]
-	                return `${start} - ${end || 'Present' }`
-	            },
-	            id(index, target) {
-	                var id = `contract-${index + 1}`
-	                return target ? `#${id}` : id
-	            },
-	            */
 	            init() {
 	                var { contracts } = this;
 	                var index = contracts
 	                    .findIndex(c => c.active);
 	                this.aIndex = index > -1 ? index : 0;
-	            },
-	            select(index) {
-	                //setTimeout(() => {
-	                    //console.log('select', index + 1)
-	                    //this.aIndex = index
-	                //}, 100)
-	//                this.aIndex = index
-	            },
-	            /*
-				status(index) {
-	                var { contracts } = this
-	                var { active } = contracts[index]
-					return active ? 'Active' : 'Archived'
-	            },
-	            target(index) {
-	                var { id } = this
-	                var tag = id(index)
-	                return `#${tag}`
 	            }
-	            */
-
 	        },
 			watch: {
 			}
@@ -415,10 +401,11 @@
 		  		</ul>
 		  		<div class="dropdown">
 					<button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-						<span>Select a Household</span>
+						<span v-text="household"></span>
+						<span>&nbsp;</span>
 					</button>
 					<div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuButton">
-						<a class="dropdown-item" href="#" v-for="(household, index) in households" v-on:click="select('household', index)">
+						<a class="dropdown-item" href="#" v-for="(household, index) in households" v-on:click="select(household)">
 							<span v-text="household.name"></span>
 						</a>
 			  			<div class="dropdown-divider"></div>
@@ -445,20 +432,24 @@
 			},
 			computed: {
 				households() {
-					var { households } = this.navbar;
+					var { household, navbar } = this;
+					var { households } = navbar;
 					return households
-	            }
+						.filter(h => h.name != household)
+				},
+				household() {
+					var { households, index } = this.navbar;
+					var household = households[index];
+					return household ? household.name : 'Please select a household'
+				}
 			},
 			methods: {
 				init() {
 				},
-				select(type, index) {
+				select(household) {
 					var { navbar } = this;
-					switch(type) {
-	                    case 'household':
-	                        navbar.index = index;
-							break
-					}
+					var { households } = navbar;
+					navbar.index = households.findIndex(h => h.name == household.name);
 				}
 			},
 			watch: {
@@ -470,7 +461,7 @@
 	app.module('component/quarter', function({ component, factory, service }) {
 
 	    var { chart } = component;
-	    var { Format, Sys } = factory;
+	    var { Format } = factory;
 	    var { events } = service;
 
 	    var template = `
@@ -559,26 +550,19 @@
 	                this.contractAddress = '';
 	                this.quarterId = '';
 	            },
-	            async quarter(e) {
+	            quarter(e) {
 	                this.init();
-	                console.log('quarter event...');
 	                var { contractAddress, quarterId } = e;
-	                await Sys.wait(100);
-	                this.contractAddress = contractAddress;
-	                this.quarterId = quarterId;
+	                this.$nextTick(() => {
+	                    this.contractAddress = contractAddress;
+	                    this.quarterId = quarterId;
+	                });
 	            },
 	            label(index) {
 	                return `account${index}`
 	            },
 	        },
 			watch: {
-	            household: {
-	                handler() {
-	                    console.log('household changed...');
-	                    this.init();
-	                },
-	                deep: true
-	            }
 			}
 		}
 
@@ -589,13 +573,15 @@
 	    var { Contract } = model;
 	    var { events } = service;
 
+	    var { Vue } = window;
+
 	    var template = `
         <div>
             <p class="h6" v-text="year"></p>
                 <div class="btn-group btn-group-sm btn-group-toggle mb-3" data-toggle="buttons">
-                    <template v-for="(button, index) in buttons">
+                    <template v-for="(button, index) in buttons.list">
                         <template v-if="quarter(quarters, index)">
-                            <label class="btn btn-outline-dark" :class="buttonIndex == index ? 'active' : ''" v-on:click="select(button)">
+                            <label class="btn btn-outline-dark" :class="buttons.index == index ? 'active' : ''" v-on:click="select(index)">
                                 <input type="radio" name="options">
                                 <span v-text="button.label"></span>
                             </label>
@@ -614,24 +600,16 @@
 
 	    return {
 	        template,
-	        props: ['contract', 'year'],
+	        props: ['buttons', 'contract', 'year'],
 			data() {
 				return {
-	                buttonIndex: '',
-	                buttons: ''
 				}
 			},
 			created() {
 	            this.init();
 			},
 			mounted() {
-	            var { buttons, contract } = this;
-	            if (contract.active && contract.Quarter) {
-	                var button = buttons
-	                    .find(b => b.id == contract.Quarter);
-	                if (button)
-	                    this.select(button);
-	            }
+	            this.preSelect();
 			},
 			destroyed() {
 			},
@@ -643,25 +621,37 @@
 	        },
 			methods: {
 	            init() {
-	                var { year } = this;
+	                var { buttons, year } = this;
 	                var list = [1, 2, 3, 4];
-	                var buttons = list
-	                    .map((n) => {
-	                        var label = `Q${n}`;
-	                        var id = `${year}${1}`;
-	                        return { id, label }
-	                    });
-	                this.buttons = buttons;
+	                if (!buttons.index) {
+	                    Vue.set(buttons, 'index', -1);
+	                    var list = [1, 2, 3, 4]
+	                        .map((n) => {
+	                            var label = `Q${n}`;
+	                            var id = `${year}${n}`;
+	                            return { id, label }
+	                        });
+	                    Vue.set(buttons, 'list', list);
+	                }
+	            },
+	            preSelect() {
+	                var { buttons, contract } = this;
+	                if (contract.active && contract.Quarter) {
+	                    var index = buttons.list
+	                        .findIndex(b => b.id == contract.Quarter);
+	                    if (index > -1)
+	                        this.select(index);
+	                }
 	            },
 	            quarter(quarters, index) {
 	                return quarters
 	                    .find(q => q.id && String(q.id).slice(4) == index + 1)
 	            },
-	            select(button) {
+	            select(index) {
 	                var { contract, buttons } = this;
+	                buttons.index = index;
+	                var button = buttons.list[index];
 	                var { id: quarterId } = button;
-	                this.buttonIndex = buttons
-	                    .findIndex(b => b.id == quarterId);
 	                var { accountNum, address: contractAddress } = contract;
 	                events.$emit('quarter', { accountNum, contractAddress, quarterId });
 	            }
@@ -1305,40 +1295,6 @@
 
 	});
 
-	app.module('model/Quarter', function({ factory }) {
-
-	    var { Model } = factory;
-
-	    var defaults = { select: false };
-	    var required = ['accountNum', 'contractAddress', 'id'];
-
-	    class Quarter extends Model {
-
-	        constructor(data, accountNum, contractAddress) {
-	            if (contractAddress)
-	                data.contractAddress = contractAddress;
-	            if (accountNum)
-	                data.accountNum = accountNum;
-	            super({ data, required, defaults });
-	        }
-
-	        get label() {
-	            var { id } = this;
-	            var N = String(id).slice(4);
-	            return `Q${N}`
-	        }
-
-	        get year() {
-	            var { id } = this;
-	            return +String(id).slice(0, 4)
-	        }
-
-	    }
-
-	    return Quarter
-
-	});
-
 	app.module('service/blockchain', function({ factory }) {
 
 	    var { store } = factory;
@@ -1431,7 +1387,7 @@
 
 	//import './session'
 
-	app.module('view/main', function({ component, model, service, view }) {
+	app.module('view/main', function({ component, model, service }) {
 
 		var { contracts, householdHeader, navbar, quarter } = component;
 		var { Household } = model;
@@ -1442,18 +1398,20 @@
 		var template = `
 		<div>
 			<navbar :navbar="navbar"></navbar>
-			<div class="container-fluid">
-				<household-header :household="household"></household-header>
-      			<div class="row">
-        			<div class="col-4 border-bottom mt-3">
-						<h3>Contracts</h3>
-						<contracts :household="household"></contracts>
-					</div>
-        			<div class="col-8">
-          				<quarter :household="household"></quarter>
+			<template v-if="ready">
+				<div class="container-fluid">
+					<household-header :household="household"></household-header>
+					<div class="row">
+						<div class="col-4 border-bottom mt-3">
+							<h3>Contracts</h3>
+							<contracts :household="household"></contracts>
+						</div>
+						<div class="col-8">
+							<quarter :household="household"></quarter>
+						</div>
 					</div>
 				</div>
-			</div>
+			</template>
 		</div>
     `;
 
@@ -1465,7 +1423,8 @@
 			components,
 			data: {
 				components: '',
-				navbar: ''
+				navbar: '',
+				ready : ''
 			},
 			created() {
 				this.init();
@@ -1489,10 +1448,19 @@
 				}
 			},
 			watch: {
+				'navbar.index'() {
+					if (!this.ready)
+						return
+					this.ready = false;
+					this.$nextTick(() => {
+						this.ready = true;
+					});
+				}
 			},
 			methods: {
 				init() {
 					this.navbar = { households: [], index: 0 };
+					this.ready = true;
 					this.load();
 				},
 				async load() {
@@ -1501,7 +1469,6 @@
 					try {
 						var households = await blockchain.dummyData();
 						navbar.households.push(...households.map(h => new Household(h)));
-						console.log({ navbar });
 					} catch(e) {
 						console.log(e);
 					}

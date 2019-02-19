@@ -1,7 +1,7 @@
 app.module('component/quarter', function({ component, factory, service }) {
 
     var { chart } = component
-    var { Format, Sys } = factory
+    var { Format } = factory
     var { events } = service
 
     var template = `
@@ -90,26 +90,19 @@ app.module('component/quarter', function({ component, factory, service }) {
                 this.contractAddress = ''
                 this.quarterId = ''
             },
-            async quarter(e) {
+            quarter(e) {
                 this.init()
-                console.log('quarter event...')
                 var { contractAddress, quarterId } = e
-                await Sys.wait(100)
-                this.contractAddress = contractAddress
-                this.quarterId = quarterId
+                this.$nextTick(() => {
+                    this.contractAddress = contractAddress
+                    this.quarterId = quarterId
+                })
             },
             label(index) {
                 return `account${index}`
             },
         },
 		watch: {
-            household: {
-                handler() {
-                    console.log('household changed...')
-                    this.init()
-                },
-                deep: true
-            }
 		}
 	}
 

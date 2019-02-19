@@ -9,18 +9,20 @@ app.module('view/main', function({ component, model, service }) {
 	var template = `
 		<div>
 			<navbar :navbar="navbar"></navbar>
-			<div class="container-fluid">
-				<household-header :household="household"></household-header>
-      			<div class="row">
-        			<div class="col-4 border-bottom mt-3">
-						<h3>Contracts</h3>
-						<contracts :household="household"></contracts>
-					</div>
-        			<div class="col-8">
-          				<quarter :household="household"></quarter>
+			<template v-if="ready">
+				<div class="container-fluid">
+					<household-header :household="household"></household-header>
+					<div class="row">
+						<div class="col-4 border-bottom mt-3">
+							<h3>Contracts</h3>
+							<contracts :household="household"></contracts>
+						</div>
+						<div class="col-8">
+							<quarter :household="household"></quarter>
+						</div>
 					</div>
 				</div>
-			</div>
+			</template>
 		</div>
     `
 
@@ -32,7 +34,8 @@ app.module('view/main', function({ component, model, service }) {
 		components,
 		data: {
 			components: '',
-			navbar: ''
+			navbar: '',
+			ready : ''
 		},
 		created() {
 			this.init()
@@ -56,10 +59,19 @@ app.module('view/main', function({ component, model, service }) {
 			}
 		},
 		watch: {
+			'navbar.index'() {
+				if (!this.ready)
+					return
+				this.ready = false
+				this.$nextTick(() => {
+					this.ready = true
+				})
+			}
 		},
 		methods: {
 			init() {
 				this.navbar = { households: [], index: 0 }
+				this.ready = true
 				this.load()
 			},
 			async load() {

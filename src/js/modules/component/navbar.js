@@ -31,10 +31,11 @@ app.module('component/navbar', function() {
 		  		</ul>
 		  		<div class="dropdown">
 					<button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-						<span>Select a Household</span>
+						<span v-text="household"></span>
+						<span>&nbsp;</span>
 					</button>
 					<div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuButton">
-						<a class="dropdown-item" href="#" v-for="(household, index) in households" v-on:click="select('household', index)">
+						<a class="dropdown-item" href="#" v-for="(household, index) in households" v-on:click="select(household)">
 							<span v-text="household.name"></span>
 						</a>
 			  			<div class="dropdown-divider"></div>
@@ -61,20 +62,24 @@ app.module('component/navbar', function() {
 		},
 		computed: {
 			households() {
-				var { households } = this.navbar
+				var { household, navbar } = this
+				var { households } = navbar
 				return households
-            }
+					.filter(h => h.name != household)
+			},
+			household() {
+				var { households, index } = this.navbar
+				var household = households[index]
+				return household ? household.name : 'Please select a household'
+			}
 		},
 		methods: {
 			init() {
 			},
-			select(type, index) {
+			select(household) {
 				var { navbar } = this
-				switch(type) {
-                    case 'household':
-                        navbar.index = index
-						break
-				}
+				var { households } = navbar
+				navbar.index = households.findIndex(h => h.name == household.name)
 			}
 		},
 		watch: {
