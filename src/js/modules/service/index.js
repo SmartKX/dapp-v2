@@ -1,3 +1,3 @@
 import './blockchain'
 import './events'
-//import './session'
+import './firebase'

@@ -9,10 +9,14 @@
     "rollup-plugin-node-resolve": "^4.0.0"
   },
   "scripts": {
-    "preinstall": "npm i -g rollup",
+    "preinstall": "npm i -g rollup http-server",
     "clean": "rm -rf dist",
     "build": "cd src && rollup -c",
+<<<<<<< HEAD
     "deploy": "git subtree push --prefix dist origin gh-pages"
+=======
+    "serve": "http-server dist"
+>>>>>>> 259245bab4518152ea906731cb96131d6afea335
   },
   "repository": {
     "type": "git",
