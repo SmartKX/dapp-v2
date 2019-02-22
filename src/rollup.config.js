@@ -11,7 +11,7 @@ var output = {
 
 var options = {
 	execute: [
-		`sed -i 's/app\$1/app/g' ${output.file}`
+		`gsed -i 's/app\$1/app/g' ${output.file}`
 	],
 	files: [`CNAME`, `index.html`],
 	dirs: ['css'],
