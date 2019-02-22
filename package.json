@@ -24,5 +24,7 @@
     "url": "https://github.com/SmartKX/dapp-v2/issues"
   },
   "homepage": "https://github.com/SmartKX/dapp-v2#readme",
-  "dependencies": {}
+  "dependencies": {
+    "http-server": "^0.11.1"
+  }
 }
