@@ -1,6 +1,8 @@
 import './format'
 import './http'
 import './model'
+import './session'
 import './store'
+import './style'
 import './sys'
 import './user'

@@ -13,7 +13,7 @@
     "clean": "rm -rf dist",
     "build": "cd src && rollup -c",
     "deploy": "firebase deply",
-    "serve": "http-server dist"
+    "dev": "http-server dist"
   },
   "repository": {
     "type": "git",

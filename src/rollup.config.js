@@ -11,10 +11,10 @@ var output = {
 
 var options = {
 	execute: [
-		`gsed -i 's/app\$1/app/g' ${output.file}`
+		`gsed -i 's/app\$1/app/g' ${output.file} 2>/dev/null || sed -i 's/app\$1/app/g' ${output.file} || echo "Error, unable to ammend build file!"`
 	],
 	files: [`CNAME`, `index.html`],
-	dirs: ['css'],
+	dirs: ['css', 'img'],
 	resolve: {}
 }
 

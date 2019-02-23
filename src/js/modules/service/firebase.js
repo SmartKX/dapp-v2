@@ -1,5 +1,6 @@
-app.module('service/firebase', function() {
+app.module('service/firebase', function({ factory }) {
 
+    var { Sys } = factory
     var { firebase } = window
 
     var config = {
@@ -11,12 +12,13 @@ app.module('service/firebase', function() {
         messagingSenderId: "21341398973"
     }
 
-    firebase.initializeApp(config);
+    firebase.initializeApp(config)
 
     class Firebase {
 
-        static someMethod() {
-
+        static async login(user) {
+            await Sys.wait(500)
+            return 'some bollox'
         }
 
     }

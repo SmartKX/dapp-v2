@@ -41,14 +41,20 @@ app.module('component/navbar', function() {
 			  			<div class="dropdown-divider"></div>
 			  			<a class="dropdown-item" href="#">New Household</a>
 					</div>
-		  		</div>
-			</div>
-	  </nav>
+				</div>
+				<div>
+					<p>&nbsp;</p>
+				</div>
+				<div>
+					<button type="button" class="btn btn-danger" v-on:click="logout">Logout</button>
+				</div>
+ 			</div>
+		</nav>
 	`
 
 	return {
         template,
-        props: ['navbar'],
+        props: ['navbar', 'user'],
 		data() {
 			return {
 			}
@@ -80,6 +86,10 @@ app.module('component/navbar', function() {
 				var { navbar } = this
 				var { households } = navbar
 				navbar.index = households.findIndex(h => h.name == household.name)
+			},
+			logout() {
+				var { user } = this
+				user.logout()
 			}
 		},
 		watch: {

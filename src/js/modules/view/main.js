@@ -1,41 +1,24 @@
-app.module('view/main', function({ component, model, service }) {
+app.module('view/main', function({ view }) {
 
-	var { contracts, householdHeader, navbar, quarter } = component
-	var { Household } = model
-	var { blockchain } = service
+	var { homeView, loginView } = view
 
 	var { Vue } = window
 
 	var template = `
 		<div>
-			<navbar :navbar="navbar"></navbar>
-			<template v-if="ready">
-				<div class="container-fluid">
-					<household-header :household="household"></household-header>
-					<div class="row">
-						<div class="col-4 border-bottom mt-3">
-							<h3>Contracts</h3>
-							<contracts :household="household"></contracts>
-						</div>
-						<div class="col-8">
-							<quarter :household="household"></quarter>
-						</div>
-					</div>
-				</div>
-			</template>
+			<component :is="view.component" :user="user"></component>
 		</div>
     `
 
-	var components = { contracts, householdHeader, navbar, quarter }
+	var components = { homeView, loginView }
 
     new Vue({
 		el: '#app',
 		template,
 		components,
 		data: {
-			components: '',
-			navbar: '',
-			ready : ''
+			user: '',
+			views: ''
 		},
 		created() {
 			this.init()
@@ -45,44 +28,33 @@ app.module('view/main', function({ component, model, service }) {
 		destroyed() {
 		},
 		computed: {
-			household() {
-				var { index, households } = this.navbar
-				return households[index]
-			},
-			households() {
-				var { households } = this.navbar
-				return households
-			},
-			householdIndex() {
-				var { index } = this.navbar
-				return index
+			view() {
+				var { user, views } = this
+				return user.token ? views.get('home') : views.get('login')
 			}
 		},
 		watch: {
-			'navbar.index'() {
-				if (!this.ready)
-					return
-				this.ready = false
-				this.$nextTick(() => {
-					this.ready = true
-				})
-			}
 		},
 		methods: {
 			init() {
-				this.navbar = { households: [], index: 0 }
-				this.ready = true
-				this.load()
+				var views = ['login', 'home']
+				this.views = views
+					.reduce((map, name) => {
+						var component = `${name}-view`
+						return map.set(name, { component })
+					}, new Map())
+				var { login, logout } = this
+				var user = { name: '', pass: '', login, logout, token: '' }
+				this.user = user
 			},
-			async load() {
-				var { navbar } = this
-				navbar.index = 0
-				try {
-					var households = await blockchain.dummyData()
-					navbar.households.push(...households.map(h => new Household(h)))
-				} catch(e) {
-					console.log(e)
-				}
+			login(token) {
+				var { user } = this
+				user.token = token
+			},
+			logout() {
+				var { user } = this
+				user.name = ''
+				user.token = ''
 			}
 		}
 	})
